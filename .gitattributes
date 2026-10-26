@@ -1,0 +1,2 @@
+# Windows-скрипты должны оставаться с CRLF при любом core.autocrlf
+*.bat text eol=crlf

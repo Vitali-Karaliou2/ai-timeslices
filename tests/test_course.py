@@ -220,3 +220,10 @@ def test_outside_development_admin_is_closed_and_secret_required(tmp_path):
     with TestClient(create_app(prod)) as c:
         assert c.get("/admin/db").status_code == 404
         assert c.get("/").status_code == 401
+
+
+def test_alembic_ini_is_ascii():
+    """Alembic читает alembic.ini в кодировке ОС (cp1252 на Windows): только ASCII."""
+    from app.config import ROOT_DIR
+
+    (ROOT_DIR / "alembic.ini").read_bytes().decode("ascii")
