@@ -1,0 +1,20 @@
+# Зависимости оболочки и генераторов трасс. Новые пакеты — только с согласия автора.
+--extra-index-url https://download.pytorch.org/whl/cpu
+
+fastapi
+uvicorn[standard]
+jinja2
+sqlalchemy
+alembic
+pydantic
+markdown
+python-multipart
+itsdangerous
+
+# Тесты
+pytest
+httpx
+
+# Генерация трасс демо и материалы заданий (оболочка их не импортирует)
+numpy
+torch
