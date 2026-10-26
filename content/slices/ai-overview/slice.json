@@ -1,0 +1,14 @@
+{
+  "id": "ai-overview",
+  "title": "Что такое ИИ: карта курса",
+  "yearFrom": 1943,
+  "yearTo": 2026,
+  "track": "genai",
+  "period": "golden",
+  "summary": "ЧЕРНОВИК: заглушка — обзор курса; реальный текст появится в следующих сессиях.",
+  "pages": [
+    { "id": "overview", "type": "overview", "file": "pages/01-overview.md" },
+    { "id": "history",  "type": "history",  "file": "pages/02-history.md" }
+  ],
+  "status": "draft"
+}

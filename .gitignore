@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+*.egg-info/
+
+# Рабочая БД (SQLite)
+app.db
+app.db-journal
+
+# Редакторы и ОС
+.idea/
+.vscode/
+.DS_Store

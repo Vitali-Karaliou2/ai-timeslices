@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>{{ course.title }}</h1>
+<p class="legend">
+  <span class="period golden">golden</span> — всплеск надежд,
+  <span class="period winter">winter</span> — разочарование.
+</p>
+<ol class="course-map">
+  {% for s, state in items %}
+  <li class="slice period-{{ s.period }} state-{{ state.value }}" data-slice-id="{{ s.id }}" data-state="{{ state.value }}">
+    <div class="slice-head">
+      {% if state.value == "Unavailable" %}
+        <span class="slice-title">{{ s.title }}</span>
+      {% else %}
+        <a class="slice-title" href="/slices/{{ s.id }}">{{ s.title }}</a>
+      {% endif %}
+      <span class="years">{{ s.year_from }}{% if s.year_to != s.year_from %}–{{ s.year_to }}{% endif %}</span>
+    </div>
+    <div class="slice-meta">
+      <span class="period {{ s.period }}">{{ s.period }}</span>
+      <span class="track">{{ s.track }}</span>
+      <span class="state">{{ {"Unavailable": "недоступен", "Available": "доступен", "InProgress": "в процессе", "Done": "пройден"}[state.value] }}</span>
+    </div>
+    <p class="summary">{{ s.summary }}</p>
+  </li>
+  {% endfor %}
+</ol>
+{% endblock %}

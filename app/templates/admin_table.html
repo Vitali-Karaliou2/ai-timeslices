@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}БД — {{ table }}{% endblock %}
+{% block content %}
+<p><a href="/admin/db">← Все таблицы</a></p>
+<h1>{{ table }}</h1>
+<p>Строк: {{ total }}{% if total > limit %} (показаны первые {{ limit }}){% endif %}.</p>
+<table class="grid">
+  <thead><tr>{% for c in columns %}<th>{{ c }}</th>{% endfor %}</tr></thead>
+  <tbody>
+  {% for row in rows %}
+    <tr>{% for v in row %}<td>{{ v if v is not none else "NULL" }}</td>{% endfor %}</tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% if ddl %}
+<h2>DDL</h2>
+<pre>{{ ddl }}</pre>
+{% endif %}
+{% endblock %}

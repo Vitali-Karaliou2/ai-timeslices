@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block title %}Срез недоступен{% endblock %}
+{% block content %}
+<h1>Срез недоступен</h1>
+<p>«{{ slice.title }}» откроется, когда будет пройден предыдущий срез{% if prev %}:
+  <a href="/slices/{{ prev.id }}">{{ prev.title }}</a>{% endif %}.</p>
+<p><a href="/">← Карта курса</a></p>
+{% endblock %}
