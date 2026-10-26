@@ -31,8 +31,9 @@ A_Brief_History_of_AI_with_Deep_Learning (в контексте проекта �
 - Окружение: `python3 -m venv .venv && source .venv/bin/activate` — в облачной сессии это
   делает хук SessionStart (`scripts/setup_env.sh`); если пакетов нет — выполни
   `bash scripts/setup_env.sh` вручную.
-- Зависимости: `pip install -r requirements.txt`. Новые пакеты — только через
-  requirements.txt и с моего согласия.
+- Зависимости: `pip install -r requirements.txt`; PyTorch (CPU) — отдельно,
+  `pip install -r requirements-ml.txt`, только когда он нужен по плану сессии.
+  Новые пакеты — только через requirements*.txt и с моего согласия.
 - Запуск: `uvicorn app.main:app --reload --port 8000` (http://localhost:8000)
 - Тесты: `pytest`
 - Миграции: `alembic revision --autogenerate -m "<name>"` затем `alembic upgrade head`

@@ -9,7 +9,7 @@
 
 ## Шаблон
 ```
-Сессия NN_ИИ, проект timeslices-ai.
+Сессия NN_ИИ, проект ai-timeslices.
 Прочитай CLAUDE.md, docs/plans/session-NN-<тема>.md и новые файлы в docs/decisions/.
 Работай в ветке session-NN-ai-<тема>. Выполни задачу сессии.
 Перед PR — субагент code-reviewer (и fact-reviewer, если менялись тексты срезов).
@@ -19,7 +19,7 @@
 
 ## Промпт сессии 01_ИИ (дословно)
 ```
-Сессия 01_ИИ, проект timeslices-ai.
+Сессия 01_ИИ, проект ai-timeslices.
 Прочитай CLAUDE.md, docs/plans/session-01-skeleton.md и docs/decisions/.
 Работай в ветке session-01-ai-skeleton. Выполни задачу сессии.
 Перед PR — субагент code-reviewer.

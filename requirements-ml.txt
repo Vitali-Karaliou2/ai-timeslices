@@ -1,0 +1,4 @@
+# PyTorch (CPU) — нужен только генераторам трасс gen/torch/. Ставится отдельно,
+# когда до него дойдёт план сессии: pip install -r requirements-ml.txt
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch
