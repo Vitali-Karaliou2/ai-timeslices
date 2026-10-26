@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}{{ page.title }} — {{ slice.title }}{% endblock %}
+{% block content %}
+<div class="page-layout period-{{ slice.period }}">
+  <aside class="toc">
+    <h2><a href="/slices/{{ slice.id }}">{{ slice.title }}</a></h2>
+    <ol>
+      {% for t in toc %}
+      <li{% if loop.index == n %} class="current"{% endif %}><a href="/slices/{{ slice.id }}/pages/{{ loop.index }}">{{ t }}</a></li>
+      {% endfor %}
+    </ol>
+  </aside>
+  <article class="page page-type-{{ page_type }}">
+    <p class="page-pos">Страница {{ n }} из {{ total }}</p>
+    <h1>{{ page.title }}</h1>
+    {{ body_html | safe }}
+    <nav class="pager">
+      {% if n > 1 %}<a class="prev" href="/slices/{{ slice.id }}/pages/{{ n - 1 }}">← Назад</a>{% endif %}
+      <a class="toc-link" href="/">Карта курса</a>
+      {% if n < total %}<a class="next" href="/slices/{{ slice.id }}/pages/{{ n + 1 }}">Вперёд →</a>{% endif %}
+    </nav>
+    {% if n == total %}
+    <form method="post" action="/slices/{{ slice.id }}/done" class="done-form">
+      {% if state.value == "Done" %}<p>Срез уже пройден.</p>{% endif %}
+      <button type="submit">Срез пройден</button>
+    </form>
+    {% endif %}
+  </article>
+</div>
+{% endblock %}
