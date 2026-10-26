@@ -11,6 +11,7 @@ from pathlib import Path
 from pydantic import BaseModel
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
+DEV_SECRET_KEY = "dev-only-secret-key"
 
 
 class Settings(BaseModel):
@@ -18,8 +19,8 @@ class Settings(BaseModel):
     environment: str = "Development"
     database_url: str = f"sqlite:///{ROOT_DIR / 'app.db'}"
     content_dir: Path = ROOT_DIR / "content"
-    # Ключ подписи cookie-сессии; на 0→1 достаточно dev-значения.
-    secret_key: str = "dev-only-secret-key"
+    # Ключ подписи cookie-сессии; dev-значение допустимо только в Development.
+    secret_key: str = DEV_SECRET_KEY
     dev_user_name: str = "dev"
 
     @property

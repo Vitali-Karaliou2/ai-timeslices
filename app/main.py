@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 
 import markdown
 from fastapi import Depends, FastAPI, HTTPException, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import inspect, select, text
@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 from starlette.middleware.sessions import SessionMiddleware
 
 from app import progress
-from app.config import ROOT_DIR, Settings, get_settings
+from app.config import DEV_SECRET_KEY, ROOT_DIR, Settings, get_settings
 from app.content import Course, load_course, read_page
 from app.db import make_engine, make_session_factory, upgrade_to_head
 from app.models import SliceState, User
@@ -31,6 +31,8 @@ def _ensure_dev_user(session_factory, settings: Settings) -> None:
 
 def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or get_settings()
+    if not settings.is_development and settings.secret_key == DEV_SECRET_KEY:
+        raise RuntimeError("Вне Development задайте TIMESLICES_SECRET_KEY")
     # Fail fast: битое содержание — отказ стартовать с понятным сообщением.
     course = load_course(settings.content_dir)
     engine = make_engine(settings.database_url)
@@ -51,7 +53,6 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.add_middleware(SessionMiddleware, secret_key=settings.secret_key,
                        session_cookie="timeslices_session")
     app.mount("/static", StaticFiles(directory=str(ROOT_DIR / "app" / "static")), name="static")
-    app.mount("/content", StaticFiles(directory=str(settings.content_dir)), name="content")
 
     def get_db() -> Iterator[Session]:
         with session_factory() as db:
@@ -111,7 +112,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         progress.open_page(db, row, n)
         page = read_page(s.pages[n - 1])
         body_html = markdown.markdown(page.body_md, extensions=["fenced_code", "tables"])
-        toc = [read_page(p).title for p in s.pages]
+        toc = [p.title for p in s.pages]
         return templates.TemplateResponse(request, "page.html", {
             "slice": s, "n": n, "total": len(s.pages), "page": page,
             "page_type": s.pages[n - 1].type, "body_html": body_html, "toc": toc,
@@ -125,8 +126,25 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         states = progress.sync_states(db, course, user.id)
         if progress.effective_state(course, states, s.id) == SliceState.Unavailable:
             return _unavailable(request, s)
-        progress.mark_done(db, course, user.id, states[s.id])
+        if not progress.mark_done(db, course, user.id, states[s.id]):
+            # Неоткрытый срез сначала надо открыть: Available → InProgress → Done.
+            return RedirectResponse(f"/slices/{s.id}", status_code=303)
         return RedirectResponse("/", status_code=303)
+
+    @app.get("/content/slices/{slice_id}/demos/{path:path}")
+    def demo_file(slice_id: str, path: str, request: Request, db: Session = Depends(get_db),
+                  user: User = Depends(current_user)):
+        """Статика демо (index.html, player.js, trace.json, gen/). Страницы и манифесты
+        срезов наружу не отдаются; демо недоступного среза закрыто так же, как его страницы."""
+        s = get_slice_or_404(slice_id)
+        states = progress.sync_states(db, course, user.id)
+        if progress.effective_state(course, states, s.id) == SliceState.Unavailable:
+            return _unavailable(request, s)
+        demos_dir = (s.dir / "demos").resolve()
+        target = (demos_dir / path).resolve()
+        if not target.is_relative_to(demos_dir) or not target.is_file():
+            raise HTTPException(status_code=404, detail="Файл демо не найден")
+        return FileResponse(target)
 
     def _unavailable(request: Request, s):
         i = course.index_of(s.id)
@@ -134,13 +152,19 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return templates.TemplateResponse(request, "unavailable.html",
                                           {"slice": s, "prev": prev}, status_code=403)
 
-    @app.get("/admin/db", response_class=HTMLResponse)
+    def development_only() -> None:
+        # Инспектор БД — инструмент разработки: вне Development его нет.
+        if not settings.is_development:
+            raise HTTPException(status_code=404)
+
+    @app.get("/admin/db", response_class=HTMLResponse, dependencies=[Depends(development_only)])
     def admin_db(request: Request):
         insp = inspect(engine)
         tables = [(t, len(insp.get_columns(t))) for t in insp.get_table_names()]
         return templates.TemplateResponse(request, "admin_db.html", {"tables": tables})
 
-    @app.get("/admin/db/{table}", response_class=HTMLResponse)
+    @app.get("/admin/db/{table}", response_class=HTMLResponse,
+             dependencies=[Depends(development_only)])
     def admin_table(table: str, request: Request):
         insp = inspect(engine)
         # Имя таблицы берётся только из списка инспектора: никакого ввода SQL.

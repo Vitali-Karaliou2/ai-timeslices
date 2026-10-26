@@ -21,8 +21,13 @@ def sync_states(db: Session, course: Course, user_id: int) -> dict[str, UserSlic
 
     Сохранённые InProgress/Done не понижаются (повторное прохождение их не ломает);
     Unavailable/Available пересчитываются из состояния предыдущего среза.
+    Если после перестановки срезов в course.json InProgress/Done-срез оказался после
+    непройденного, в БД его состояние сохраняется, а показывается он как Unavailable
+    (effective_state); когда предшественники будут пройдены, оно снова станет видно.
+    Коммит — только при изменениях.
     """
     stored = _stored(db, user_id)
+    changed = False
     prev_done = True  # у первого среза «предыдущий» считается пройденным
     for s in course.slices:
         row = stored.get(s.id)
@@ -31,12 +36,15 @@ def sync_states(db: Session, course: Course, user_id: int) -> dict[str, UserSlic
                                  state=SliceState.Unavailable)
             db.add(row)
             stored[s.id] = row
+            changed = True
         if row.state not in (SliceState.InProgress, SliceState.Done):
             wanted = SliceState.Available if prev_done else SliceState.Unavailable
             if row.state != wanted:
                 row.state = wanted
+                changed = True
         prev_done = prev_done and row.state == SliceState.Done
-    db.commit()
+    if changed:
+        db.commit()
     return stored
 
 
@@ -54,11 +62,19 @@ def effective_state(course: Course, states: dict[str, UserSliceState], slice_id:
 def open_page(db: Session, row: UserSliceState, n: int) -> None:
     if row.state == SliceState.Available:
         row.state = SliceState.InProgress
-    row.last_page = n
-    db.commit()
+    if row.last_page != n:
+        row.last_page = n
+    if db.dirty:
+        db.commit()
 
 
-def mark_done(db: Session, course: Course, user_id: int, row: UserSliceState) -> None:
+def mark_done(db: Session, course: Course, user_id: int, row: UserSliceState) -> bool:
+    """InProgress/Done → Done. Неоткрытый (Available) срез пройти нельзя: False."""
+    if row.state not in (SliceState.InProgress, SliceState.Done):
+        return False
+    if row.state == SliceState.Done:
+        return True
     row.state = SliceState.Done
     db.commit()
     sync_states(db, course, user_id)  # следующий срез становится Available
+    return True

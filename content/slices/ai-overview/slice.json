@@ -5,7 +5,7 @@
   "yearTo": 2026,
   "track": "genai",
   "period": "golden",
-  "summary": "ЧЕРНОВИК: заглушка — обзор курса; реальный текст появится в следующих сессиях.",
+  "summary": "ЧЕРНОВИК: заглушка — обзор курса; реальный текст появится в следующих сессиях. ПРОВЕРИТЬ ДАТУ: границы курса 1943–2026.",
   "pages": [
     { "id": "overview", "type": "overview", "file": "pages/01-overview.md" },
     { "id": "history",  "type": "history",  "file": "pages/02-history.md" }

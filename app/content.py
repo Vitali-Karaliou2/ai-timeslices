@@ -28,6 +28,7 @@ class Page:
     id: str
     type: str
     path: Path
+    title: str  # из front-matter; читается при загрузке для оглавления
 
 
 @dataclass(frozen=True)
@@ -149,7 +150,10 @@ def _load_slice(content_dir: Path, slice_id: str) -> Slice:
         page_path = slice_dir / p["file"]
         if not page_path.is_file():
             raise ContentError(f"{pctx}: файл страницы '{p['file']}' не найден")
-        pages.append(Page(id=page_id, type=p["type"], path=page_path))
+        title = parse_page(page_path.read_text(encoding="utf-8")).meta.get("title")
+        if not title:
+            raise ContentError(f"{pctx}: в front-matter страницы '{p['file']}' нет title")
+        pages.append(Page(id=page_id, type=p["type"], path=page_path, title=title))
 
     _load_demos(slice_dir)
     return Slice(
@@ -178,11 +182,14 @@ def load_course(content_dir: Path) -> Course:
 
 
 def read_page(page: Page) -> RenderedPage:
+    return parse_page(page.path.read_text(encoding="utf-8"), default_title=page.title)
+
+
+def parse_page(text: str, default_title: str = "") -> RenderedPage:
     """Разбирает Markdown-страницу с front-matter (`---` / `key: value` / `---`).
 
     Front-matter у страниц плоский (title, demo), поэтому полный YAML-парсер не нужен.
     """
-    text = page.path.read_text(encoding="utf-8")
     meta: dict[str, str] = {}
     body = text
     lines = text.splitlines()
@@ -195,4 +202,4 @@ def read_page(page: Page) -> RenderedPage:
                         meta[key.strip()] = value.strip().strip("\"'")
                 body = "\n".join(lines[j + 1:])
                 break
-    return RenderedPage(title=meta.get("title", page.id), meta=meta, body_md=body)
+    return RenderedPage(title=meta.get("title", default_title), meta=meta, body_md=body)

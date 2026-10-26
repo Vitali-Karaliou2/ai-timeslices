@@ -38,6 +38,16 @@ def write_course(root: Path, slices: list[dict]) -> Path:
             "track": "genai", "period": s.get("period", "golden"),
             "summary": "ЧЕРНОВИК: тест", "pages": pages, "status": "draft",
         }), encoding="utf-8")
+        if s.get("demo"):
+            ddir = sdir / "demos" / "d1"
+            (ddir / "gen" / "numpy").mkdir(parents=True)
+            (ddir / "index.html").write_text("<p>плеер</p>", encoding="utf-8")
+            (ddir / "trace.json").write_text('{"points": [], "steps": []}', encoding="utf-8")
+            (ddir / "gen" / "numpy" / "train.py").write_text("# генератор\n", encoding="utf-8")
+            (ddir / "demo.json").write_text(json.dumps({
+                "id": "d1", "title": "Демо", "entry": "index.html", "trace": "trace.json",
+                "gen": {"numpy": "gen/numpy/train.py"},
+            }), encoding="utf-8")
     return content
 
 
@@ -52,7 +62,8 @@ def client(tmp_path):
 def client3(tmp_path):
     """Клиент на временном курсе из трёх срезов: golden, winter, golden."""
     content = write_course(tmp_path, [
-        {"id": "s-one"}, {"id": "s-two", "period": "winter"}, {"id": "s-three"},
+        {"id": "s-one", "demo": True}, {"id": "s-two", "period": "winter", "demo": True},
+        {"id": "s-three"},
     ])
     with TestClient(create_app(make_settings(tmp_path, content))) as c:
         yield c
