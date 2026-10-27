@@ -108,7 +108,7 @@ def test_group_page_shows_pinned_figure(client):
 def test_figures_in_text_without_pinning(client):
     p1 = client.get("/slices/ai-overview/pages/1").text
     assert 'class="pinned"' not in p1
-    assert re.search(rf'<figure>\s*<img alt="Рисунок 1" src="{FIG1}"\s*/?>\s*'
+    assert re.search(rf'<figure>\s*<img alt="Рисунок 1"[^>]*\ssrc="{FIG1}"[^>]*>\s*'
                      r"<figcaption>Рисунок 1\. Области ИИ", p1)
     p7 = client.get("/slices/ai-overview/pages/7").text
     assert 'class="pinned"' not in p7

@@ -27,7 +27,7 @@ def png_display_size(path: Path) -> tuple[int, int] | None:
             head = f.read(24)
     except OSError:
         return None
-    if head[:8] != b"\x89PNG\r\n\x1a\n" or head[12:16] != b"IHDR":
+    if len(head) < 24 or head[:8] != b"\x89PNG\r\n\x1a\n" or head[12:16] != b"IHDR":
         return None
     w, h = struct.unpack(">II", head[16:24])
     return max(1, w // 2), max(1, h // 2)
