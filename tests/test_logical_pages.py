@@ -200,3 +200,15 @@ def test_non_string_group_is_content_error(tmp_path):
     with pytest.raises(ContentError, match="group"):
         load_course(content)
     assert validate_script(path)[0] == 1
+
+
+def test_validator_output_is_utf8_with_non_utf8_console(tmp_path):
+    """На Windows канал stdout — в cp1251/cp866; сообщения валидатора всё равно читаются как UTF-8."""
+    import os
+
+    content, path = grouped_course(tmp_path, groups=["g", None, "g"])
+    env = dict(os.environ, PYTHONIOENCODING="cp1251")
+    r = subprocess.run([sys.executable, str(ROOT_DIR / "scripts" / "validate_content.py"), str(path)],
+                       capture_output=True, env=env)
+    assert r.returncode == 1
+    assert "разорвана" in r.stdout.decode("utf-8")
