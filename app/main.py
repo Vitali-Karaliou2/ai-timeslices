@@ -1,4 +1,5 @@
 """Оболочка TimeSlices-AI: маршруты FastAPI (аналог Razor Pages) и сборка приложения."""
+import hashlib
 from collections.abc import Iterator
 from contextlib import asynccontextmanager
 
@@ -20,6 +21,10 @@ from app.render import figure_url, render_markdown
 ADMIN_ROW_LIMIT = 200
 
 templates = Jinja2Templates(directory=str(ROOT_DIR / "app" / "templates"))
+# Версия стилей в URL (/static/style.css?v=...): браузер не берёт устаревший файл из кеша
+# после обновления оболочки (так Edge показывал страницы по стилям до сессии 02).
+templates.env.globals["static_v"] = hashlib.sha1(
+    (ROOT_DIR / "app" / "static" / "style.css").read_bytes()).hexdigest()[:10]
 
 
 def _ensure_dev_user(session_factory, settings: Settings) -> None:

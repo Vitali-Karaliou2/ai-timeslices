@@ -212,3 +212,23 @@ def test_validator_output_is_utf8_with_non_utf8_console(tmp_path):
                        capture_output=True, env=env)
     assert r.returncode == 1
     assert "разорвана" in r.stdout.decode("utf-8")
+
+
+def test_inline_figure_gets_half_pixel_display_size():
+    """Рисунки — двойной плотности: в тексте страницы у <img> width/height = половина PNG."""
+    from app.render import png_display_size, render_markdown
+
+    s = load_course(ROOT_DIR / "content").get("ai-overview")
+    w, h = png_display_size(s.dir / "figures" / "fig1_nested.png")
+    html = render_markdown("![Рисунок 1](figures/fig1_nested.png)", s)
+    assert f'width="{w}"' in html and f'height="{h}"' in html
+    assert png_display_size(s.dir / "pages" / "01-about-intro.md") is None
+
+
+def test_stylesheet_url_is_versioned():
+    """Ссылка на стили содержит версию: браузер не показывает страницу по устаревшему CSS."""
+    import app.main as main
+
+    assert main.templates.env.globals["static_v"]
+    base = (ROOT_DIR / "app" / "templates" / "base.html").read_text(encoding="utf-8")
+    assert "style.css?v={{ static_v }}" in base

@@ -18,7 +18,9 @@ a { color: #1a5fb4; }
 .slice-meta { font-size: .85rem; display: flex; gap: .6rem; }
 .slice .summary { margin: .3rem 0 0; }
 
-.page-layout { display: grid; grid-template-columns: 14rem minmax(0, 1fr); gap: 1.5rem; }
+/* Страницы среза — на всю ширину окна; строка текста ограничена для читаемости. */
+main:has(.page-layout) { max-width: none; padding: 1rem 1.5rem; }
+.page-layout { display: grid; grid-template-columns: 14rem minmax(0, 52rem); gap: 1.5rem 2rem; justify-content: start; }
 .toc { font-size: .9rem; }
 .toc ol ol { padding-left: 1.1rem; }
 .toc .current, .toc .current-group > a { font-weight: 700; }
@@ -29,8 +31,8 @@ a { color: #1a5fb4; }
 figure { margin: 1rem 0; }
 figure img { max-width: 100%; height: auto; display: block; }
 figcaption { font-size: .85rem; font-style: italic; color: #444; margin-top: .3rem; }
-main:has(.has-pinned) { max-width: 90rem; }
-.page-layout.has-pinned { grid-template-columns: 14rem minmax(0, 1fr) minmax(0, 1fr); }
+/* Закреплённый рисунок — узкая колонка справа, текст получает основную ширину. */
+.page-layout.has-pinned { grid-template-columns: 14rem minmax(0, 52rem) clamp(16rem, 26vw, 25rem); }
 .has-pinned .pinned { grid-column: 3; grid-row: 1; }
 .has-pinned .page { grid-column: 2; grid-row: 1; }
 .pinned figure { position: sticky; top: 1rem; margin-top: 0; }
@@ -44,6 +46,7 @@ table.grid th, table.grid td { border: 1px solid #ccc; padding: .2rem .5rem; }
 /* Узкий экран: одна колонка; закреплённый рисунок — над текстом. */
 @media (max-width: 60rem) {
   .page-layout.has-pinned { grid-template-columns: 14rem minmax(0, 1fr); }
+  .pinned figure { max-width: 25rem; }
   .has-pinned .pinned { grid-column: 2; grid-row: 1; }
   .has-pinned .page { grid-column: 2; grid-row: 2; }
   .has-pinned .toc { grid-row: 1 / span 2; }
