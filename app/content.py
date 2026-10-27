@@ -229,6 +229,8 @@ def _load_slice(content_dir: Path, slice_id: str) -> Slice:
 
         group = p.get("group")
         if group is not None:
+            if not isinstance(group, str):
+                raise ContentError(f"{pctx}: group — строка (id группы)")
             if group not in groups:
                 raise ContentError(f"{pctx}: группа '{group}' не описана в 'groups'")
             if group in closed_groups:

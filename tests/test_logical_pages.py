@@ -153,6 +153,7 @@ def test_figures_of_unavailable_slice_are_403(tmp_path):
         assert c.get("/content/slices/s-one/figures/missing.png").status_code == 404
         assert c.get("/content/slices/s-one/figures/../slice.json").status_code == 404
         assert c.get("/content/slices/s-one/figures/%2E%2E/slice.json").status_code == 404
+        assert c.get("/content/slices/s-one/figures/f1%00.png").status_code == 404
 
 
 # --- содержание дословно совпадает с источником ----------------------------------------
@@ -176,3 +177,26 @@ def test_page_11_text_matches_source_verbatim():
             parts.append("## " + page.title)
         parts.append(body)
     assert "\n\n".join(parts) == src
+
+
+def test_validator_and_loader_use_same_figure_patterns():
+    """scripts/validate_content.py автономен (не импортирует app) — регулярки дублируются."""
+    import importlib.util
+
+    import app.content as content
+    spec = importlib.util.spec_from_file_location(
+        "validate_content", ROOT_DIR / "scripts" / "validate_content.py")
+    v = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(v)
+    assert v.FIGURE_RE.pattern == content.FIGURE_RE.pattern
+    assert v.FIGURE_REF_RE.pattern == content.FIGURE_REF_RE.pattern
+
+
+def test_non_string_group_is_content_error(tmp_path):
+    content, path = grouped_course(tmp_path)
+    d = json.loads(path.read_text(encoding="utf-8"))
+    d["pages"][0]["group"] = ["g"]
+    path.write_text(json.dumps(d), encoding="utf-8")
+    with pytest.raises(ContentError, match="group"):
+        load_course(content)
+    assert validate_script(path)[0] == 1

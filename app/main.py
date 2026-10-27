@@ -143,7 +143,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         if progress.effective_state(course, states, s.id) == SliceState.Unavailable:
             return _unavailable(request, s)
         base = (s.dir / folder).resolve()
-        target = (base / path).resolve()
+        try:
+            target = (base / path).resolve()
+        except (ValueError, OSError):  # например, нулевой байт в пути
+            raise HTTPException(status_code=404, detail="Файл не найден")
         if not target.is_relative_to(base) or not target.is_file():
             raise HTTPException(status_code=404, detail="Файл не найден")
         return FileResponse(target)

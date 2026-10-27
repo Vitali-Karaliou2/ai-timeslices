@@ -89,6 +89,9 @@ def validate_groups_and_figures(d, pages, base, ctx):
             continue
         pctx = f"{ctx}: pages[{i}]"
         g = p.get("group")
+        if g is not None and not isinstance(g, str):
+            err(f"{pctx}: group — строка (id группы)")
+            g = None
         if g is not None:
             used.add(g)
             if g not in groups:
