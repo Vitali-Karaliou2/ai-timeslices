@@ -21,8 +21,8 @@ def order(client) -> list[str]:
 def test_course_map_lists_slices_in_course_order(client):
     r = client.get("/")
     assert r.status_code == 200
-    assert order(client) == ["ai-overview", "neuron-1943"]
-    assert states(client) == {"ai-overview": "Available", "neuron-1943": "Unavailable"}
+    assert order(client) == ["ai-overview", "first-neurons"]
+    assert states(client) == {"ai-overview": "Available", "first-neurons": "Unavailable"}
 
 
 def test_golden_and_winter_are_distinguishable(client3):
@@ -34,13 +34,13 @@ def test_golden_and_winter_are_distinguishable(client3):
 # --- п. 3: недоступность ---------------------------------------------------------
 
 def test_unavailable_slice_is_closed_by_direct_url(client):
-    for url in ("/slices/neuron-1943", "/slices/neuron-1943/pages/1"):
+    for url in ("/slices/first-neurons", "/slices/first-neurons/pages/1"):
         r = client.get(url, follow_redirects=False)
         assert r.status_code == 403
         assert "Срез недоступен" in r.text
-        assert "Идея" not in r.text  # заголовок первой страницы не показан
-    assert client.post("/slices/neuron-1943/done", follow_redirects=False).status_code == 403
-    assert states(client)["neuron-1943"] == "Unavailable"
+        assert "Откуда идея" not in r.text  # заголовок первой страницы не показан
+    assert client.post("/slices/first-neurons/done", follow_redirects=False).status_code == 403
+    assert states(client)["first-neurons"] == "Unavailable"
 
 
 def test_unknown_slice_and_page_are_404(client):
@@ -80,10 +80,10 @@ def test_done_makes_next_slice_available(client):
     client.get("/slices/ai-overview/pages/2")
     r = client.post("/slices/ai-overview/done", follow_redirects=False)
     assert r.status_code == 303 and r.headers["location"] == "/"
-    assert states(client) == {"ai-overview": "Done", "neuron-1943": "Available"}
-    r = client.get("/slices/neuron-1943/pages/1")
-    assert r.status_code == 200 and "Идея" in r.text
-    assert states(client)["neuron-1943"] == "InProgress"
+    assert states(client) == {"ai-overview": "Done", "first-neurons": "Available"}
+    r = client.get("/slices/first-neurons/pages/1")
+    assert r.status_code == 200 and "Откуда идея" in r.text
+    assert states(client)["first-neurons"] == "InProgress"
 
 
 # --- п. 5: повторное прохождение -----------------------------------------------
@@ -146,14 +146,14 @@ def test_admin_db_lists_tables_and_rows(client):
 def test_done_requires_opened_slice(client):
     r = client.post("/slices/ai-overview/done", follow_redirects=False)
     assert r.status_code == 303 and r.headers["location"] == "/slices/ai-overview"
-    assert states(client) == {"ai-overview": "Available", "neuron-1943": "Unavailable"}
+    assert states(client) == {"ai-overview": "Available", "first-neurons": "Unavailable"}
 
 
 def test_repeated_done_is_idempotent(client):
     client.get("/slices/ai-overview/pages/1")
     client.post("/slices/ai-overview/done")
     client.post("/slices/ai-overview/done")
-    assert states(client) == {"ai-overview": "Done", "neuron-1943": "Available"}
+    assert states(client) == {"ai-overview": "Done", "first-neurons": "Available"}
 
 
 def test_reordered_course_hides_slice_after_unfinished_one(tmp_path):

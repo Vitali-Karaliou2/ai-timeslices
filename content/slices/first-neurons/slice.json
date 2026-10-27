@@ -1,0 +1,57 @@
+{
+  "id": "first-neurons",
+  "title": "Первые нейросети",
+  "yearFrom": 1943,
+  "yearTo": 1943,
+  "track": "genai",
+  "period": "golden",
+  "summary": "ЧЕРНОВИК: формальный нейрон Мак-Каллока и Питтса (1943) — откуда идея, как устроена модель, что доказано и чего в ней нет; нейрон как формула и в коде.",
+  "groups": {
+    "formal-neuron": {
+      "title": "Формальный нейрон (1943)"
+    }
+  },
+  "figures": {
+    "fig1_neuron.png": {
+      "caption": "Рисунок 1. Слева — биологический нейрон: дендриты с синапсами, тело, аксон с окончаниями. Справа — формальный нейрон: двоичные входы (тормозящий — с кружком на конце), порог θ, двоичный выход."
+    },
+    "fig2_logic_gates.png": {
+      "caption": "Рисунок 2. Нейроны И, ИЛИ, НЕ: возбуждающие связи — стрелки, тормозящая — линия с кружком на конце, число в нейроне — порог."
+    }
+  },
+  "pages": [
+    {
+      "id": "formal-neuron-bio",
+      "type": "history",
+      "file": "pages/01-formal-neuron-bio.md",
+      "group": "formal-neuron"
+    },
+    {
+      "id": "formal-neuron-authors",
+      "type": "history",
+      "file": "pages/02-formal-neuron-authors.md",
+      "group": "formal-neuron",
+      "pinned": "figures/fig1_neuron.png"
+    },
+    {
+      "id": "formal-neuron-model",
+      "type": "idea",
+      "file": "pages/03-formal-neuron-model.md",
+      "group": "formal-neuron"
+    },
+    {
+      "id": "formal-neuron-proved",
+      "type": "idea",
+      "file": "pages/04-formal-neuron-proved.md",
+      "group": "formal-neuron",
+      "pinned": "figures/fig2_logic_gates.png"
+    },
+    {
+      "id": "formal-neuron-after",
+      "type": "history",
+      "file": "pages/05-formal-neuron-after.md",
+      "group": "formal-neuron"
+    }
+  ],
+  "status": "draft"
+}

@@ -139,7 +139,7 @@ def test_physical_navigation_and_done_on_last_page(client):
             assert f'class="next" href="/slices/ai-overview/pages/{n + 1}"' in html
     r = client.post("/slices/ai-overview/done", follow_redirects=False)
     assert r.status_code == 303
-    r = client.get("/slices/neuron-1943/pages/1")
+    r = client.get("/slices/first-neurons/pages/1")
     assert r.status_code == 200
 
 
@@ -232,3 +232,48 @@ def test_stylesheet_url_is_versioned():
     assert main.templates.env.globals["static_v"]
     base = (ROOT_DIR / "app" / "templates" / "base.html").read_text(encoding="utf-8")
     assert "style.css?v={{ static_v }}" in base
+
+
+# --- срез first-neurons: логическая страница 21 «Формальный нейрон (1943)» -------------
+
+def test_page_21_text_matches_source_verbatim():
+    """Сборка 5 физических страниц обратно (без «ЧЕРНОВИК:», рисунки → [[РИСУНОК N]]
+    и подписи из slice.json) даёт текст источника 21.v2 дословно."""
+    src = (ROOT_DIR / "docs" / "content-sources" / "21" / "21.v2.Formal_neuron.md")\
+        .read_text(encoding="utf-8")
+    src = src[src.index("-->") + 3:].strip()
+    s = load_course(ROOT_DIR / "content").get("first-neurons")
+    parts = ["# " + s.groups["formal-neuron"]]
+    for k, page in enumerate(s.pages):
+        body = read_page(page).body_md.strip()
+        assert body.startswith("ЧЕРНОВИК:\n\n")
+        body = body.removeprefix("ЧЕРНОВИК:\n\n")
+        for num, ref in (("1", "figures/fig1_neuron.png"), ("2", "figures/fig2_logic_gates.png")):
+            body = body.replace(f"![Рисунок {num}]({ref})",
+                                f"[[РИСУНОК {num}]]\n\n*{s.captions[ref]}*")
+        if k:
+            parts.append("## " + page.title)
+        else:  # вступление стоит перед разделом 1 на той же физической странице
+            intro, body = body.split("\n\n", 1)
+            parts += [intro, "## " + page.title]
+        parts.append(body)
+    assert "\n\n".join(parts) == src
+
+
+def test_page_21_figures_and_pinning(client):
+    client.get("/slices/ai-overview/pages/1")
+    assert client.post("/slices/ai-overview/done", follow_redirects=False).status_code == 303
+    base = "/content/slices/first-neurons/figures/"
+    pinned = {2: "fig1_neuron.png", 4: "fig2_logic_gates.png"}
+    inline = {1: "fig1_neuron.png", 3: "fig2_logic_gates.png"}
+    for n in range(1, 6):
+        html = client.get(f"/slices/first-neurons/pages/{n}").text
+        assert f"Страница {n} из 5" in html and "Формальный нейрон (1943)" in html
+        aside = re.search(r'<aside class="pinned">(.*?)</aside>', html, re.S)
+        if n in pinned:
+            assert aside and f'src="{base}{pinned[n]}"' in aside.group(1)
+        else:
+            assert not aside
+        if n in inline:
+            assert re.search(rf'<figure>\s*<img alt="Рисунок \d"[^>]*\ssrc="{base}{inline[n]}"', html)
+    assert client.get(base + "fig2_logic_gates.png").headers["content-type"] == "image/png"
