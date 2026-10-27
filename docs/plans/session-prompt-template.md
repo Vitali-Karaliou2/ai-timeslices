@@ -26,3 +26,14 @@
 Заверши отчётом по скиллу session-report и создай PR.
 Дополнительно в этой сессии: ничего.
 ```
+
+## Промпт сессии 02_ИИ (дословно)
+```
+Сессия 02_ИИ, проект ai-timeslices.
+Прочитай CLAUDE.md, docs/plans/session-02-load-11-about-this-course.md, docs/workflow/content-workflow.md,
+docs/decisions/ (особенно 0004 и 0005) и docs/deferred/deferred.json.
+Работай в ветке session-02-ai-load-11-about. Выполни задачу сессии.
+Перед PR — субагенты code-reviewer и fact-reviewer.
+Заверши отчётом по скиллу session-report и создай PR.
+Дополнительно в этой сессии: ничего.
+```
