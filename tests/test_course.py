@@ -38,7 +38,7 @@ def test_unavailable_slice_is_closed_by_direct_url(client):
         r = client.get(url, follow_redirects=False)
         assert r.status_code == 403
         assert "Срез недоступен" in r.text
-        assert "Идея" not in r.text  # заголовок первой страницы не показан
+        assert "Откуда идея" not in r.text  # заголовок первой страницы не показан
     assert client.post("/slices/first-neurons/done", follow_redirects=False).status_code == 403
     assert states(client)["first-neurons"] == "Unavailable"
 
