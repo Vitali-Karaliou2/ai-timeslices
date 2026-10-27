@@ -62,9 +62,11 @@ def validate(data):
 
 
 def _keyword_hit(keyword, text):
-    """Латинские слова — целиком (GAN не находится в «organ»), кириллица — по основе."""
+    """Латинские слова — целиком (GAN не находится в «organ»); короткие аббревиатуры
+    заглавными (RNN, SOM) — с учётом регистра; кириллица — по основе слова."""
     if re.fullmatch(r"[A-Za-z0-9 .·\-]+", keyword):
-        return re.search(r"(?<![A-Za-z0-9])" + re.escape(keyword) + r"(?![A-Za-z0-9])", text, re.I) is not None
+        flags = 0 if (keyword.isupper() and len(keyword) <= 5) else re.I
+        return re.search(r"(?<![A-Za-z0-9])" + re.escape(keyword) + r"(?![A-Za-z0-9])", text, flags) is not None
     return keyword.lower() in text.lower()
 
 
@@ -94,8 +96,15 @@ def format_hits(hits):
 
 
 def _emit_context(event, text):
+    # ensure_ascii=True: вывод не зависит от кодировки консоли (cp1251/cp866 на Windows).
     print(json.dumps({"hookSpecificOutput": {"hookEventName": event, "additionalContext": text}},
-                     ensure_ascii=False))
+                     ensure_ascii=True))
+
+
+def _read_stdin_json():
+    # Claude Code передаёт JSON в UTF-8; читаем байты, не полагаясь на кодировку ОС.
+    raw = sys.stdin.buffer.read() if hasattr(sys.stdin, "buffer") else sys.stdin.read().encode("utf-8")
+    return json.loads(raw.decode("utf-8") or "{}")
 
 
 def main(argv=None):
@@ -107,13 +116,17 @@ def main(argv=None):
     sub.add_parser("hook-prompt")
     sub.add_parser("hook-session")
     args = p.parse_args(argv)
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")  # CLI-вывод по-русски и на Windows
+    except (AttributeError, ValueError):
+        pass
 
     # Хуки никогда не должны мешать работе: при любой ошибке — молча выйти с кодом 0.
     if args.cmd in ("hook-prompt", "hook-session"):
         try:
             data = load()
             if args.cmd == "hook-prompt":
-                prompt = (json.load(sys.stdin) or {}).get("prompt", "")
+                prompt = (_read_stdin_json() or {}).get("prompt", "")
                 hits = due(data, text=prompt)
                 if hits:
                     _emit_context("UserPromptSubmit", format_hits(hits))
@@ -124,8 +137,8 @@ def main(argv=None):
                     _emit_context("SessionStart",
                                   f"Открытые решения, отложенные на будущее (docs/deferred/deferred.json), — {len(open_items)}: {titles}. "
                                   "Если тема сессии касается одного из них — напомни автору до начала работы.")
-        except Exception:
-            pass
+        except Exception as e:  # причину видно в stderr, работа не прерывается
+            print(f"deferred.py {args.cmd}: {e!r}", file=sys.stderr)
         return 0
 
     data = load()

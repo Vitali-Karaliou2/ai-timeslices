@@ -69,3 +69,17 @@ def test_hooks_registered_in_settings():
     commands = json.dumps(settings["hooks"], ensure_ascii=False)
     assert "deferred.py hook-prompt" in commands
     assert "deferred.py hook-session" in commands
+
+
+def test_hook_prompt_subprocess_cyrillic_with_non_utf8_console():
+    """Как вызывает Claude Code: UTF-8 на stdin; кодировка консоли (Windows) не должна мешать."""
+    import os
+    import subprocess
+
+    env = dict(os.environ, PYTHONIOENCODING="cp1251", CLAUDE_PROJECT_DIR=str(ROOT_DIR))
+    prompt = json.dumps({"prompt": "Начнём срез о рекуррентных сетях → LSTM"}, ensure_ascii=False)
+    r = subprocess.run([sys.executable, str(ROOT_DIR / "scripts" / "deferred.py"), "hook-prompt"],
+                       input=prompt.encode("utf-8"), capture_output=True, env=env)
+    assert r.returncode == 0
+    out = json.loads(r.stdout.decode("ascii"))
+    assert "D001" in out["hookSpecificOutput"]["additionalContext"]

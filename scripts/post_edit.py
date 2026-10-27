@@ -32,7 +32,7 @@ if name in ("course.json", "slice.json", "demo.json", "questions.json", "assignm
         print(r.stdout + r.stderr, file=sys.stderr)
         sys.exit(2)
 
-if name == "deferred.json":
+if os.path.normpath(path).replace(os.sep, "/").endswith("docs/deferred/deferred.json"):
     r = subprocess.run(
         [sys.executable, os.path.join(root, "scripts", "deferred.py"), "validate"],
         capture_output=True, text=True,
