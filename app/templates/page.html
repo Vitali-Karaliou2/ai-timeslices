@@ -1,17 +1,36 @@
 {% extends "base.html" %}
 {% block title %}{{ page.title }} — {{ slice.title }}{% endblock %}
 {% block content %}
-<div class="page-layout period-{{ slice.period }}">
+<div class="page-layout period-{{ slice.period }}{% if pinned %} has-pinned{% endif %}">
   <aside class="toc">
     <h2><a href="/slices/{{ slice.id }}">{{ slice.title }}</a></h2>
     <ol>
-      {% for t in toc %}
-      <li{% if loop.index == n %} class="current"{% endif %}><a href="/slices/{{ slice.id }}/pages/{{ loop.index }}">{{ t }}</a></li>
+      {% for item in toc %}
+      {% if item.children %}
+      {% set in_group = item.children | selectattr("n", "equalto", n) | list %}
+      <li class="toc-group{% if in_group %} current-group{% endif %}"><a href="/slices/{{ slice.id }}/pages/{{ item.n }}">{{ item.title }}</a>
+        <ol>
+          {% for sub in item.children %}
+          <li{% if sub.n == n %} class="current"{% endif %}><a href="/slices/{{ slice.id }}/pages/{{ sub.n }}">{{ sub.title }}</a></li>
+          {% endfor %}
+        </ol>
+      </li>
+      {% else %}
+      <li{% if item.n == n %} class="current"{% endif %}><a href="/slices/{{ slice.id }}/pages/{{ item.n }}">{{ item.title }}</a></li>
+      {% endif %}
       {% endfor %}
     </ol>
   </aside>
+  {% if pinned %}
+  <aside class="pinned">
+    <figure>
+      <img src="{{ pinned.src }}" alt="">
+      <figcaption>{{ pinned.caption }}</figcaption>
+    </figure>
+  </aside>
+  {% endif %}
   <article class="page page-type-{{ page_type }}">
-    <p class="page-pos">Страница {{ n }} из {{ total }}</p>
+    <p class="page-pos">{% if group_title %}<span class="group-title">{{ group_title }}</span> · {% endif %}Страница {{ n }} из {{ total }}</p>
     <h1>{{ page.title }}</h1>
     {{ body_html | safe }}
     <nav class="pager">

@@ -46,7 +46,7 @@ def test_unavailable_slice_is_closed_by_direct_url(client):
 def test_unknown_slice_and_page_are_404(client):
     assert client.get("/slices/no-such-slice").status_code == 404
     assert client.get("/slices/ai-overview/pages/0").status_code == 404
-    assert client.get("/slices/ai-overview/pages/3").status_code == 404
+    assert client.get("/slices/ai-overview/pages/9").status_code == 404
 
 
 # --- п. 4: навигация, Markdown, «Срез пройден» -------------------------------------
@@ -57,20 +57,23 @@ def test_page_navigation_and_markdown(client):
 
     p1 = client.get("/slices/ai-overview/pages/1").text
     assert "ЧЕРНОВИК" in p1
-    assert "<strong>Трек</strong>" in p1                        # Markdown отрендерен
-    assert 'href="/slices/ai-overview/pages/2"' in p1           # вперёд и оглавление
+    assert 'class="next" href="/slices/ai-overview/pages/2"' in p1  # вперёд
     assert "← Назад" not in p1 and "Срез пройден" not in p1
 
     p2 = client.get("/slices/ai-overview/pages/2").text
-    assert "<table>" in p2
+    assert "<strong>Что это.</strong>" in p2                     # Markdown отрендерен
     assert 'class="prev" href="/slices/ai-overview/pages/1"' in p2
-    assert "Вперёд →" not in p2
-    assert "Срез пройден" in p2                                  # только на последней
+    assert "Срез пройден" not in p2
+
+    p8 = client.get("/slices/ai-overview/pages/8").text
+    assert "<ul>" in p8
+    assert "Вперёд →" not in p8
+    assert "Срез пройден" in p8                                  # только на последней
 
     assert states(client)["ai-overview"] == "InProgress"
     # /slices/{id} ведёт на последнюю открытую страницу
     assert client.get("/slices/ai-overview", follow_redirects=False).headers["location"] \
-        == "/slices/ai-overview/pages/2"
+        == "/slices/ai-overview/pages/8"
 
 
 def test_done_makes_next_slice_available(client):

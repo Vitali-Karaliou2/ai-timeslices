@@ -5,10 +5,74 @@
   "yearTo": 2026,
   "track": "genai",
   "period": "golden",
-  "summary": "ЧЕРНОВИК: заглушка — обзор курса; реальный текст появится в следующих сессиях. ПРОВЕРИТЬ ДАТУ: границы курса 1943–2026.",
+  "summary": "ЧЕРНОВИК: что означают искусственный интеллект, машинное обучение, нейронные сети, глубокое обучение и генеративный ИИ, как они соотносятся и как устроен курс.",
+  "groups": {
+    "about": {
+      "title": "О чём этот курс"
+    }
+  },
+  "figures": {
+    "fig1_nested.png": {
+      "caption": "Рисунок 1. Области ИИ и их вложенность; годы — появление направления (подробнее в разделах 1–4; для ML и DL: первая дата — начало, вторая — когда направление сложилось). Генеративный ИИ пересекает границы областей: а — глубокие генеративные модели (GPT, диффузионные модели); б — генеративные нейросети без большой глубины (например, машина Больцмана, 1985); в — генеративные модели классического машинного обучения без нейросетей (n-граммы, скрытые марковские модели); г — порождение текста по правилам, без обучения (пограничный случай, например ELIZA)."
+    },
+    "fig2_timeline.png": {
+      "caption": "Рисунок 2. Появление направлений и некоторые вехи. Сплошная линия — с момента, когда направление сложилось; пунктир — предыстория; для генеративного ИИ сплошная линия условно начинается с GAN (2014)."
+    }
+  },
   "pages": [
-    { "id": "overview", "type": "overview", "file": "pages/01-overview.md" },
-    { "id": "history",  "type": "history",  "file": "pages/02-history.md" }
+    {
+      "id": "about-intro",
+      "type": "overview",
+      "file": "pages/01-about-intro.md",
+      "group": "about"
+    },
+    {
+      "id": "about-ai",
+      "type": "overview",
+      "file": "pages/02-about-ai.md",
+      "group": "about",
+      "pinned": "figures/fig1_nested.png"
+    },
+    {
+      "id": "about-ml",
+      "type": "overview",
+      "file": "pages/03-about-ml.md",
+      "group": "about",
+      "pinned": "figures/fig1_nested.png"
+    },
+    {
+      "id": "about-nn",
+      "type": "overview",
+      "file": "pages/04-about-nn.md",
+      "group": "about",
+      "pinned": "figures/fig1_nested.png"
+    },
+    {
+      "id": "about-dl",
+      "type": "overview",
+      "file": "pages/05-about-dl.md",
+      "group": "about",
+      "pinned": "figures/fig1_nested.png"
+    },
+    {
+      "id": "about-genai",
+      "type": "overview",
+      "file": "pages/06-about-genai.md",
+      "group": "about",
+      "pinned": "figures/fig1_nested.png"
+    },
+    {
+      "id": "about-timeline",
+      "type": "overview",
+      "file": "pages/07-about-timeline.md",
+      "group": "about"
+    },
+    {
+      "id": "about-structure",
+      "type": "overview",
+      "file": "pages/08-about-structure.md",
+      "group": "about"
+    }
   ],
   "status": "draft"
 }
