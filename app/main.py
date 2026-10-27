@@ -2,7 +2,6 @@
 from collections.abc import Iterator
 from contextlib import asynccontextmanager
 
-import markdown
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -16,6 +15,7 @@ from app.config import DEV_SECRET_KEY, ROOT_DIR, Settings, get_settings
 from app.content import Course, load_course, read_page
 from app.db import make_engine, make_session_factory, upgrade_to_head
 from app.models import SliceState, User
+from app.render import figure_url, render_markdown
 
 ADMIN_ROW_LIMIT = 200
 
@@ -110,13 +110,16 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             return _unavailable(request, s)
         row = states[s.id]
         progress.open_page(db, row, n)
-        page = read_page(s.pages[n - 1])
-        body_html = markdown.markdown(page.body_md, extensions=["fenced_code", "tables"])
-        toc = [p.title for p in s.pages]
+        meta = s.pages[n - 1]
+        page = read_page(meta)
+        pinned = None
+        if meta.pinned:
+            pinned = {"src": figure_url(s.id, meta.pinned), "caption": s.captions[meta.pinned]}
         return templates.TemplateResponse(request, "page.html", {
             "slice": s, "n": n, "total": len(s.pages), "page": page,
-            "page_type": s.pages[n - 1].type, "body_html": body_html, "toc": toc,
-            "state": row.state,
+            "page_type": meta.type, "body_html": render_markdown(page.body_md, s),
+            "toc": s.toc(), "group_title": s.groups.get(meta.group) if meta.group else None,
+            "pinned": pinned, "state": row.state,
         })
 
     @app.post("/slices/{slice_id}/done")
@@ -131,20 +134,31 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             return RedirectResponse(f"/slices/{s.id}", status_code=303)
         return RedirectResponse("/", status_code=303)
 
-    @app.get("/content/slices/{slice_id}/demos/{path:path}")
-    def demo_file(slice_id: str, path: str, request: Request, db: Session = Depends(get_db),
-                  user: User = Depends(current_user)):
-        """Статика демо (index.html, player.js, trace.json, gen/). Страницы и манифесты
-        срезов наружу не отдаются; демо недоступного среза закрыто так же, как его страницы."""
+    def _slice_file(slice_id: str, folder: str, path: str, request: Request, db: Session,
+                    user: User):
+        """Файл из папки folder среза — только для доступного среза (ADR 0004, 0005),
+        с защитой от выхода за папку. Страницы и манифесты срезов наружу не отдаются."""
         s = get_slice_or_404(slice_id)
         states = progress.sync_states(db, course, user.id)
         if progress.effective_state(course, states, s.id) == SliceState.Unavailable:
             return _unavailable(request, s)
-        demos_dir = (s.dir / "demos").resolve()
-        target = (demos_dir / path).resolve()
-        if not target.is_relative_to(demos_dir) or not target.is_file():
-            raise HTTPException(status_code=404, detail="Файл демо не найден")
+        base = (s.dir / folder).resolve()
+        target = (base / path).resolve()
+        if not target.is_relative_to(base) or not target.is_file():
+            raise HTTPException(status_code=404, detail="Файл не найден")
         return FileResponse(target)
+
+    @app.get("/content/slices/{slice_id}/demos/{path:path}")
+    def demo_file(slice_id: str, path: str, request: Request, db: Session = Depends(get_db),
+                  user: User = Depends(current_user)):
+        """Статика демо (index.html, player.js, trace.json, gen/)."""
+        return _slice_file(slice_id, "demos", path, request, db, user)
+
+    @app.get("/content/slices/{slice_id}/figures/{path:path}")
+    def figure_file(slice_id: str, path: str, request: Request, db: Session = Depends(get_db),
+                    user: User = Depends(current_user)):
+        """Рисунки среза (figures/<file>): в тексте страниц и закреплённые."""
+        return _slice_file(slice_id, "figures", path, request, db, user)
 
     def _unavailable(request: Request, s):
         i = course.index_of(s.id)

@@ -15,6 +15,10 @@ ID_RE = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 TRACKS = {"genai", "xai"}
 PERIODS = {"golden", "winter"}
 STATUSES = {"draft", "approved"}
+# Рисунок среза — файл прямо в папке figures/ (ADR 0005); ссылка в тексте страницы —
+# Markdown-картинка ![...](figures/<file>).
+FIGURE_RE = re.compile(r"^figures/[A-Za-z0-9][A-Za-z0-9._-]*$")
+FIGURE_REF_RE = re.compile(r"!\[[^\]]*\]\(\s*<?(figures/[^)\s>]*)")
 PAGE_TYPES = {
     "overview",          # обзорная страница общего характера
     "winter-overview",   # обзор winter-периода: на что смещались ожидания и почему
@@ -50,6 +54,63 @@ def check_id(value, ctx):
 def check_year(value, ctx):
     if not isinstance(value, int) or not (1900 <= value <= 2035):
         err(f"{ctx}: год '{value}' вне диапазона 1900..2035")
+
+
+def check_figure(base, ref, ctx):
+    if not isinstance(ref, str) or not FIGURE_RE.match(ref):
+        err(f"{ctx}: рисунок '{ref}' — ожидается путь вида figures/<file>")
+    elif not os.path.isfile(os.path.join(base, ref)):
+        err(f"{ctx}: рисунок '{ref}' не найден рядом со slice.json")
+
+
+def validate_groups_and_figures(d, pages, base, ctx):
+    """ADR 0005: группы (логические страницы) непрерывны, закреплённые рисунки
+    и рисунки из текста страниц существуют, у закреплённых есть подпись."""
+    groups = d.get("groups", {})
+    if not isinstance(groups, dict):
+        err(f"{ctx}: 'groups' — объект {{\"<group-id>\": {{\"title\": ...}}}}")
+        groups = {}
+    for gid, g in groups.items():
+        check_id(gid, f"{ctx}: groups")
+        if not isinstance(g, dict) or not isinstance(g.get("title"), str) or not g["title"].strip():
+            err(f"{ctx}: groups.{gid}.title — непустая строка")
+    figures = d.get("figures", {})
+    if not isinstance(figures, dict):
+        err(f"{ctx}: 'figures' — объект {{\"<file>\": {{\"caption\": ...}}}}")
+        figures = {}
+    for name, f in figures.items():
+        check_figure(base, f"figures/{name}", f"{ctx}: figures")
+        if not isinstance(f, dict) or not isinstance(f.get("caption"), str) or not f["caption"].strip():
+            err(f"{ctx}: figures.{name}.caption — непустая строка")
+
+    used, closed, prev = set(), set(), None
+    for i, p in enumerate(pages):
+        if not isinstance(p, dict):
+            continue
+        pctx = f"{ctx}: pages[{i}]"
+        g = p.get("group")
+        if g is not None:
+            used.add(g)
+            if g not in groups:
+                err(f"{pctx}: группа '{g}' не описана в 'groups'")
+            if g in closed:
+                err(f"{pctx}: группа '{g}' разорвана — страницы одной группы идут подряд")
+        if prev is not None and prev != g:
+            closed.add(prev)
+        prev = g
+        pinned = p.get("pinned")
+        if pinned is not None:
+            check_figure(base, pinned, f"{pctx}: pinned")
+            if isinstance(pinned, str) and pinned.removeprefix("figures/") not in figures:
+                err(f"{pctx}: у закреплённого рисунка '{pinned}' нет подписи в 'figures'")
+        f = p.get("file")
+        page_path = os.path.join(base, f) if isinstance(f, str) else None
+        if page_path and os.path.isfile(page_path):
+            with open(page_path, encoding="utf-8") as fh:
+                for ref in FIGURE_REF_RE.findall(fh.read()):
+                    check_figure(base, ref, f"{pctx}: текст страницы '{f}'")
+    for g in sorted(set(groups) - used):
+        err(f"{ctx}: группа '{g}' описана в 'groups', но ни одна страница к ней не относится")
 
 
 def validate_course(d):
@@ -111,6 +172,7 @@ def validate_slice(d, path):
         f = p.get("file")
         if isinstance(f, str) and not os.path.exists(os.path.join(base, f)):
             err(f"{pctx}: файл '{f}' не найден рядом со slice.json")
+    validate_groups_and_figures(d, pages, base, ctx)
 
 
 def validate_demo(d, path):
