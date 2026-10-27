@@ -5,14 +5,32 @@
 `figures/<file>` переписывается здесь на маршрут `/content/slices/{id}/figures/<file>`.
 Картинка, стоящая отдельным абзацем, становится `<figure>` с подписью из
 `slice.json.figures` (если подпись там есть).
+Рисунки рисуются с двойной плотностью пикселей (dpi 200 при кегле подписей ~11 pt),
+поэтому естественный размер на экране — половина размера PNG в пикселях: он задаётся
+атрибутами width/height, а CSS только ограничивает ширину колонкой.
 """
+import struct
 import xml.etree.ElementTree as etree
+from pathlib import Path
 
 import markdown
 from markdown.extensions import Extension
 from markdown.treeprocessors import Treeprocessor
 
 from app.content import FIGURE_RE, Slice
+
+
+def png_display_size(path: Path) -> tuple[int, int] | None:
+    """Размер PNG для показа (половина пикселей, см. выше); None — не PNG или не читается."""
+    try:
+        with open(path, "rb") as f:
+            head = f.read(24)
+    except OSError:
+        return None
+    if len(head) < 24 or head[:8] != b"\x89PNG\r\n\x1a\n" or head[12:16] != b"IHDR":
+        return None
+    w, h = struct.unpack(">II", head[16:24])
+    return max(1, w // 2), max(1, h // 2)
 
 
 def figure_url(slice_id: str, ref: str) -> str:
@@ -47,6 +65,10 @@ class _FigureProcessor(Treeprocessor):
         if FIGURE_RE.match(ref):
             img.set("src", figure_url(self.slice.id, ref))
             img.set("data-figure", ref)
+            size = png_display_size(self.slice.dir / ref)
+            if size:
+                img.set("width", str(size[0]))
+                img.set("height", str(size[1]))
 
 
 class _FigureExtension(Extension):
