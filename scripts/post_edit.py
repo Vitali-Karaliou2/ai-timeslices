@@ -26,7 +26,7 @@ root = os.environ.get("CLAUDE_PROJECT_DIR", ".")
 if name in ("course.json", "slice.json", "demo.json", "questions.json", "assignments.json"):
     r = subprocess.run(
         [sys.executable, os.path.join(root, "scripts", "validate_content.py"), path],
-        capture_output=True, text=True,
+        capture_output=True, text=True, encoding="utf-8", errors="replace",
     )
     if r.returncode != 0:
         print(r.stdout + r.stderr, file=sys.stderr)
@@ -35,7 +35,7 @@ if name in ("course.json", "slice.json", "demo.json", "questions.json", "assignm
 if os.path.normpath(path).replace(os.sep, "/").endswith("docs/deferred/deferred.json"):
     r = subprocess.run(
         [sys.executable, os.path.join(root, "scripts", "deferred.py"), "validate"],
-        capture_output=True, text=True,
+        capture_output=True, text=True, encoding="utf-8", errors="replace",
     )
     if r.returncode != 0:
         print("Реестр отложенных решений:\n" + r.stdout + r.stderr, file=sys.stderr)

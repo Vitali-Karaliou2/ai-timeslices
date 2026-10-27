@@ -224,6 +224,12 @@ def validate_assignments(d):
 
 
 def main():
+    # Вывод всегда в UTF-8: на Windows кодировка консоли/канала — cp1251 или cp866,
+    # и вызывающие (тесты, хук post_edit.py) иначе не прочли бы русский текст.
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+    except (AttributeError, ValueError):
+        pass
     if len(sys.argv) != 2:
         print(__doc__)
         return 1
