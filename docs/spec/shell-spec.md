@@ -10,7 +10,7 @@
 | Razor Pages (.cshtml)   | маршруты FastAPI + шаблоны Jinja2    |
 | EF Core                 | SQLAlchemy (ORM)                     |
 | EF Migrations           | Alembic                              |
-| appsettings.json        | app/config.py (pydantic-settings)    |
+| appsettings.json        | app/config.py (pydantic + переменные окружения TIMESLICES_*) |
 | Identity                | один dev-пользователь, автовход в Development (роли не нужны на 0→1) |
 | wwwroot                 | app/static + content/ (отдаётся как статические файлы) |
 
