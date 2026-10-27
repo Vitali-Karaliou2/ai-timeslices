@@ -18,9 +18,10 @@ a { color: #1a5fb4; }
 .slice-meta { font-size: .85rem; display: flex; gap: .6rem; }
 .slice .summary { margin: .3rem 0 0; }
 
-/* Страницы среза — на всю ширину окна; колонка текста занимает всё свободное место
-   при любом масштабе (решение автора, 11.v2-to-3.issue-with-zoom). */
-main:has(.page-layout) { max-width: none; padding: 1rem 1.5rem; }
+/* Страницы среза: колонка текста занимает всё свободное место, пока ширина страницы
+   не дойдёт до 115rem (1840 px — окно 1380 px при масштабе 75 %, решение автора,
+   11.v2-to-3.issue-with-zoom); шире — страница прижата влево, справа пустое место. */
+main:has(.page-layout) { max-width: 115rem; margin: 0; padding: 1rem 1.5rem; }
 .page-layout { display: grid; grid-template-columns: 14rem minmax(0, 1fr); gap: 1.5rem 2rem; }
 .toc { font-size: .9rem; }
 .toc ol ol { padding-left: 1.1rem; }
