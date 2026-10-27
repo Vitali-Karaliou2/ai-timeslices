@@ -20,7 +20,8 @@
       "Bash(git push:*)",
       "Bash(git checkout -b:*)",
       "Bash(gh pr create:*)",
-      "Bash(gh pr view:*)"
+      "Bash(gh pr view:*)",
+      "Bash(python3 scripts/deferred.py:*)"
     ],
     "deny": [
       "Bash(git push --force:*)",
@@ -40,6 +41,10 @@
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR\"/scripts/setup_env.sh",
             "timeout": 900
+          },
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR\"/scripts/deferred.py hook-session"
           }
         ]
       }
@@ -62,6 +67,16 @@
           {
             "type": "command",
             "command": "python3 \"$CLAUDE_PROJECT_DIR\"/scripts/post_edit.py"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR\"/scripts/deferred.py hook-prompt"
           }
         ]
       }
